@@ -8,14 +8,13 @@
 
 CREATE DATABASE tournament; -- A database named tournament is created
 
---\connect tournament;  
+\connect tournament;  
 CREATE SEQUENCE serial1 START 200; --create a sequence which generates value greater than 200
 
 
 CREATE TABLE players(         -- this table stores record of each player which includes his playerid, name, no of matches
     id INT4 DEFAULT nextval('serial1'),
     name varchar(50),
-    no_matches INT DEFAULT 0,
     
    PRIMARY KEY( id )
 );
@@ -29,17 +28,17 @@ CREATE TABLE matches( -- this table records the matches. id1 -> winner id, id2 -
 
 
 
-CREATE or Replace Function updatePlayer() RETURNS TRIGGER AS $$ -- this function executes when trigger is executed
-BEGIN
-Update players set no_matches = 0 where id =OLD.id1 or id = OLD.id2;
-RETURN OLD;
-END;
-$$ LANGUAGE plpgsql;
+--CREATE or Replace Function updatePlayer() RETURNS TRIGGER AS $$ -- this function executes when trigger is executed
+--BEGIN
+--Update players set no_matches = 0 where id =OLD.id1 or id = OLD.id2;
+--RETURN OLD;
+--END;
+--$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER updateMatches AFTER DELETE on   -- this is a trigger which updates no_of_matches when matches are deleted
-matches 
-FOR EACH ROW 
-EXECUTE PROCEDURE updatePlayer();
+--CREATE TRIGGER updateMatches AFTER DELETE on   -- this is a trigger which updates no_of_matches when matches are deleted
+--matches 
+--FOR EACH ROW 
+--EXECUTE PROCEDURE updatePlayer();
 
 
 

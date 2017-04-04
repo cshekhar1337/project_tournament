@@ -8,38 +8,37 @@ import psycopg2
 
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=tournament")
+    try:
+        return psycopg2.connect("dbname=tournament")
+    except:
+        print("Connection Error")
+
+def execQuery(query):
+    con = connect()
+    cur = con.cursor()
+    cur.execute(query)
+    con.commit()
+    cur.close()
+
 
 
 def deleteMatches():
     """Remove all the match records from the database."""
-    con = connect()
-    
     query = "delete from matches"
-   
-    cur = con.cursor()
-    cur.execute(query)
-    con.commit()
-    cur.close()
-
+    execQuery(query)
 
 def deletePlayers():
     """Remove all the player records from the database."""
-    con = connect()
     
     query = "delete from players"
+    execQuery(query)
    
-    cur = con.cursor()
-    cur.execute(query)
-    con.commit()
-    cur.close()
-
 
 def countPlayers():
     """Returns the number of players currently registered."""
     con = connect()
     
-    query = "select count(name) from players"
+    query = "select COALESCE(count(name),0) from players"
 
     cur = con.cursor()
     cur.execute(query)
@@ -60,7 +59,6 @@ def registerPlayer(name):
       name: the player's full name (need not be unique).
     """
     con = connect()
-    
     query = "INSERT INTO players (name) VALUES (%s)"
     val = (name ,)
     cur = con.cursor()
@@ -84,15 +82,20 @@ def playerStandings():
         matches: the number of matches the player has played
     """
     con = connect()
-    # join query on the two tables to get standing of each player. Used grouping and aggregate function to get wins.
-    query1 = '''
-    select t2.id, t2.name, COALESCE(t1.win_count, 0) as wins, t2.no_matches  from 
-    (SELECT id1, count(id1) as win_count from matches group by id1 order by 2 desc) as t1
-    RIGHT JOIN 
-    (select id, name, no_matches from players) as t2 
-    on t1.id1 = t2.id or t1 IS NULL order by wins
-    '''
+    # join query on the two tables to get standing of each player. Used joins and aggregate function to get wins.
 
+    query1 = '''
+    select t5.id, t5.name, COALESCE(t4.win_count, 0) as wins, COALESCE(t4.tot, 0) as total_matches  from 
+    ((SELECT id1, count(id1) as win_count from matches group by id1 ) as t1
+    RIGHT JOIN 
+    (select id, count(id) as tot from players, matches where id = id1 or id = id2 group by id) as t2
+    on t2.id = t1.id1) as t4
+    RIGHT JOIN 
+    (select id, name from players) as t5 
+    on t5.id = t4.id  or t4.id IS NULL 
+    order by wins DESC;
+    '''
+    
     cur = con.cursor()
     #print(cur.mogrify(query1))
     cur.execute(query1)
@@ -121,6 +124,7 @@ def reportMatch(winner, loser):
     cur.execute(query1, val1)
     con.commit()
     cur.close()
+    """
     query2 = "UPDATE players SET no_matches = no_matches + 1 where id = %s or id = %s " # query to update players table to modify no of matches the player has played
     val2 = (winner, loser)
     cur = con.cursor()
@@ -128,6 +132,7 @@ def reportMatch(winner, loser):
     cur.execute(query2, val2)
     con.commit()
     cur.close()
+    """
 
 
 

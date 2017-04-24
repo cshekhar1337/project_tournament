@@ -1,6 +1,8 @@
 # project_tournament
 
 This program provides the implementation of the tournament api. It uses postgresql database and python for api methods implementation
+
+
 ## Steps for installation 
 1. Go to the desired folder where you want to copy this project
 2. Execute this command on the termnal "https://github.com/cshekhar1337/project_tournament.git"
